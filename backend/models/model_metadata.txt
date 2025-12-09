@@ -1,0 +1,3 @@
+Best Model: logistic_regression
+Accuracy: 0.8356
+Trained on: 200000 samples
