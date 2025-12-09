@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReviewPulse | E-Commerce Analytics</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Word Cloud -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-wordcloud@4.1.0/build/index.min.js"></script>
+    <!-- D3 for Custom Viz -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="dark-mode">
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span>ReviewPulse</span>
+            </div>
+
+            <ul class="nav-links">
+                <li class="active" onclick="switchTab('analyse')">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>Analyse</span>
+                </li>
+                <li onclick="switchTab('visualization')">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Visualization</span>
+                </li>
+                <li onclick="switchTab('query')">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Query</span>
+                </li>
+                <li onclick="switchTab('about')">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>About</span>
+                </li>
+            </ul>
+
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <i class="fa-solid fa-moon"></i>
+                <span>Dark Mode</span>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content">
+
+            <!-- Header -->
+            <header>
+                <div class="header-title">
+                    <h1 id="page-title">Analyse Sentiment</h1>
+                    <p id="page-subtitle">Real-time sentiment prediction powered by AI</p>
+                </div>
+                <div class="user-profile">
+                    <span>Admin User</span>
+                    <div class="avatar">AU</div>
+                </div>
+            </header>
+
+            <!-- Analyse Tab -->
+            <section id="analyse-tab" class="tab-content active">
+                <div class="analyse-container">
+                    <div class="input-card">
+                        <h3><i class="fa-solid fa-pen-to-square"></i> Review Input</h3>
+                        <textarea id="review-input"
+                            placeholder="Paste a product review here to analyze its sentiment..."></textarea>
+
+                        <div class="options">
+                            <label>Select Model:</label>
+                            <select id="model-select">
+                                <option value="logistic_regression">Logistic Regression</option>
+                                <option value="svm">Support Vector Machine (SVM)</option>
+                                <option value="random_forest">Random Forest</option>
+                            </select>
+                            <button class="btn-primary" onclick="analyzeSentiment()">
+                                Analyze <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="result-card" id="result-card" style="display: none;">
+                        <h3>Analysis Result</h3>
+                        <div class="sentiment-badge" id="sentiment-badge">POSITIVE</div>
+                        <div class="score-bar">
+                            <div class="fill" id="confidence-fill"></div>
+                        </div>
+                        <p class="confidence-text">Confidence: <span id="confidence-score">0%</span></p>
+
+                        <div class="keywords-box">
+                            <h4>Key Phrases</h4>
+                            <div id="keywords-list" class="tags"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-actions" style="margin-top: 1rem; text-align: center;">
+                    <button id="save-review-btn" class="btn-primary" onclick="saveCurrentReview()"
+                        style="width: 100%; justify-content: center;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Save to Database
+                    </button>
+                </div>
+            </section>
+
+            <!-- Visualization Tab -->
+            <section id="visualization-tab" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-total">-</div>
+                        <div class="stat-label">Total Reviews</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-green" id="stat-positive">-</div>
+                        <div class="stat-label">Positive</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-orange" id="stat-neutral">-</div>
+                        <div class="stat-label">Neutral</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value text-red" id="stat-negative">-</div>
+                        <div class="stat-label">Negative</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Sentiment Distribution</h3>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Customer Ratings</h3>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div class="chart-card wide">
+                        <h3>Review Volume Over Time</h3>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-card wide">
+                        <h3>Customer Voice (Word Cloud)</h3>
+                        <div id="wordcloud-container"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Query Tab -->
+            <section id="query-tab" class="tab-content">
+                <div class="query-controls">
+                    <input type="text" id="query-search" placeholder="Search by keywords...">
+                    <select id="query-sentiment">
+                        <option value="">All Sentiments</option>
+                        <option value="Positive">Positive</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Negative">Negative</option>
+                    </select>
+                    <select id="query-rating">
+                        <option value="">All Ratings</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+                    </select>
+                    <button class="btn-secondary" onclick="fetchReviews()">Search</button>
+                    <button class="btn-secondary outline" onclick="resetFilters()">Reset</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="review-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Review</th>
+                                <th>Rating</th>
+                                <th>Sentiment</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviews-table-body">
+                            <!-- Data populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls">
+                    <span id="total-results" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+                    <div id="pagination-numbers" class="pagination-numbers"></div>
+                </div>
+            </section>
+
+            <!-- About Tab -->
+            <section id="about-tab" class="tab-content">
+                <div class="about-card">
+                    <h2><i class="fa-solid fa-code-branch"></i> Project Architecture</h2>
+                    <p style="margin-bottom: 1rem; line-height: 1.6;">
+                        <strong>ReviewPulse</strong> is a high-performance analytics dashboard designed to process and
+                        visualize large-scale e-commerce datasets. Built with a focus on real-time insights, it
+                        leverages a <strong>FastAPI</strong> backend and a <strong>MongoDB</strong> data lake to handle
+                        over 100,000 customer reviews with sub-second query latency.
+                    </p>
+                    <p style="line-height: 1.6;">
+                        The core engine utilizes a <strong>Logistic Regression</strong> model (trained on TF-IDF
+                        vectors) to achieve state-of-the-art sentiment classification. This allows businesses to
+                        instantly gauge customer satisfaction across thousands of interactions, transforming raw text
+                        into actionable intelligence.
+                    </p>
+
+                    <div class="tech-stack">
+                        <div class="tech-item"><i class="fa-brands fa-python"
+                                style="font-size: 2rem; color: #3776AB;"></i> Python</div>
+                        <div class="tech-item"><i class="fa-solid fa-database"
+                                style="font-size: 2rem; color: #47A248;"></i> MongoDB</div>
+                        <div class="tech-item"><i class="fa-brands fa-js" style="font-size: 2rem; color: #F7DF1E;"></i>
+                            JavaScript</div>
+                        <div class="tech-item"><i class="fa-solid fa-robot"
+                                style="font-size: 2rem; color: #F97316;"></i> Scikit-Learn</div>
+                    </div>
+
+                    <h3 style="text-align: center; margin-bottom: 2rem;">System Performance</h3>
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <span class="value" id="metric-acc">0%</span>
+                            <span class="label">Model Accuracy</span>
+                        </div>
+                        <div class="metric">
+                            <span class="value" id="metric-f1">0.00</span>
+                            <span class="label">F1 Score</span>
+                        </div>
+                        <div class="metric">
+                            <span class="value" id="metric-recs">0</span>
+                            <span class="label">Records Processed</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 id="modal-product-name">Product Name</h3>
+            <div class="modal-meta" id="modal-meta-info">Category • Date • Rating</div>
+            <hr style="margin: 1rem 0; border: 0; border-top: 1px solid var(--border);">
+            <div id="modal-review-text" class="modal-text">
+                Full review text...
+            </div>
+            <div class="modal-footer">
+                <span id="modal-sentiment-badge" class="tag">Sentiment</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="ui_components.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
