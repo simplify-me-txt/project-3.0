@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pymongo
+pandas
+scikit-learn
+nltk
+pydantic
+matplotlib
+seaborn
+wordcloud
+joblib
+requests
+beautifulsoup4
+dnspython
+python-multipart
+tqdm
+datasets
